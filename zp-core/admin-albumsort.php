@@ -25,23 +25,32 @@ if (isset($_GET['album'])) {
 	}
 	if (isset($_GET['saved'])) {
 		XSRFdefender('save_sort');
+		
+		$newsort = '';
+		$newsort_status = '';
+		if (isset($_POST['albumimagesort'])) {
+			list($newsort, $newsort_status) = setAdminGallerySort('albumimagesort', sanitize($_POST['albumimagesort'],3), sanitize($_POST['albumimagesort_status'],3), true);
+		}
+		
 		if (isset($_POST['ids'])) { //	process bulk actions, not individual image actions.
 			$action = processImageBulkActions($album);
 			if (!empty($action)) {
 				$_GET['bulkmessage'] = $action;
 			}
 		} else {
-			$orderArray = explode('&', str_replace('id[]=', '', $_POST['sortableList']));
-			if (is_array($orderArray) && !empty($orderArray)) {
-				foreach ($orderArray as $key => $id) {
-					$sql = 'UPDATE ' . $_zp_db->prefix('images') . ' SET `sort_order`=' . $_zp_db->quote(sprintf('%03u', $key)) . ' WHERE `id`=' . sanitize_numeric($id);
-					$_zp_db->query($sql);
+			if(isset($_POST['sortableList']) && $newsort == 'manual' && !isset($_POST['albumimagesort_status'])) {
+				$orderArray = explode('&', str_replace('id[]=', '', $_POST['sortableList']));
+				if (is_array($orderArray) && !empty($orderArray)) {
+					foreach ($orderArray as $key => $id) {
+						$sql = 'UPDATE ' . $_zp_db->prefix('images') . ' SET `sort_order`=' . $_zp_db->quote(sprintf('%03u', $key)) . ' WHERE `id`=' . sanitize_numeric($id);
+						$_zp_db->query($sql);
+					}
+					$album->setSortType("manual");
+					$album->setSortDirection(false, 'image');
+					$album->setLastChangeUser($_zp_current_admin_obj->getLoginName());
+					$album->save();
+					$_GET['saved'] = 1;
 				}
-				$album->setSortType("manual");
-				$album->setSortDirection(false, 'image');
-				$album->setLastChangeUser($_zp_current_admin_obj->getLoginName());
-				$album->save();
-				$_GET['saved'] = 1;
 			}
 		}
 		if(!isset($_POST['checkForPostTruncation'])) {
@@ -75,11 +84,7 @@ setAlbumSubtabs($album);
 printAdminHeader('edit', 'sort');
 
 ?>
-<script>
-	$(function() {
-		$('#images').sortable();
-	});
-</script>
+
 <?php
 echo "\n</head>";
 ?>
@@ -128,9 +133,7 @@ echo "\n</head>";
 				?>
 				<h1><?php printf(gettext('Edit Album: <em>%1$s%2$s</em>'), $link, $alb); ?></h1>
 				<?php
-				$images = $album->getImages();
 				$subtab = printSubtabs();
-
 				$parent = dirname($album->name);
 				if ($parent == '/' || $parent == '.' || empty($parent)) {
 					$parent = '';
@@ -152,15 +155,34 @@ echo "\n</head>";
 					} 
 					?>
 					<form class="dirty-check" action="?page=edit&amp;album=<?php echo $album->getName(); ?>&amp;saved&amp;tab=sort" method="post" name="sortableListForm" id="sortableListForm" autocomplete="off">
-						<?php XSRFToken('save_sort'); ?>
+						<?php 
+						XSRFToken('save_sort'); 
+						$oldalbumimagesort = getOption('albumimagesort');
+						$oldalbumimagesort_status = getOption('albumimagesort_status');
+						$direction = getOption('albumimagedirection');
+						if (empty($oldalbumimagesort)) {
+							$oldalbumimagesort = 'manual';
+						}
+						printAdminGallerySortInfo('images', $album);
+						if ($oldalbumimagesort == 'manual') {
+							$images = $album->getImages();	
+						} else {
+							$images = $album->getImages(0, 0, $oldalbumimagesort, $direction);
+						}
+						printAdminGallerySortSelector('albumimagesort');						
+						?>
 						<?php printBulkActions($checkarray_images, true); ?>
-						<script>
-							function postSort(form) {
-								$('#sortableList').val($('#images').sortable('serialize'));
-								form.submit();
-							}
-						</script>
-
+						<?php if ($oldalbumimagesort == 'manual') { ?>
+							<script>
+								$(function() {
+									$('#images').sortable();
+								});
+								function postSort(form) {
+									$('#sortableList').val($('#images').sortable('serialize'));
+									form.submit();
+								}
+							</script>
+						<?php } ?>
 						<p class="buttons">
 							<a href="<?php echo WEBPATH . '/' . ZENFOLDER . '/admin-edit.php?page=edit' . $parent; ?>"><img	src="images/arrow_left_blue_round.png" alt="" /><strong><?php echo gettext("Back"); ?></strong></a>
 							<button type="submit" onclick="postSort(this.form);" >
@@ -173,13 +195,28 @@ echo "\n</head>";
 							</a>
 						</p>
 						<br class="clearall" /><br />
-						<p><?php echo gettext("Set the image order by dragging them to the positions you desire."); ?></p>
+						<p>
+							<?php 
+							if ($oldalbumimagesort == 'manual') {
+								echo gettext("<strong>Manual sorting enabled</strong>. Set the image order by dragging them to the positions you desire."); 
+							} else {
+								echo gettext('Set the image order to <strong>manual</strong> above to enabled drag & drop sorting.');
+							}
+							?>
+						</p>
 
 						<ul id="images">
 							<?php
-							$images = $album->getImages();
 							foreach ($images as $imagename) {
 								$image = Image::newImage($album, $imagename);
+								if ($oldalbumimagesort_status !== 'all') {
+									if($oldalbumimagesort_status == 'published' && !$image->isPublished()) {
+										continue;
+									} 
+									if($oldalbumimagesort_status == 'unpublished' && $image->isPublished()) {
+										continue;
+									}
+								}
 								?>
 								<li id="id_<?php echo $image->getID(); ?>">
 									<div class="imagethumb_wrapper">
@@ -198,7 +235,10 @@ echo "\n</head>";
 											<?php
 										}
 										?>
+										<a href="<?php echo html_encode($image->getLink()); ?>" title="zoom" target="_blank"><img src="<?php echo WEBPATH . '/' . ZENFOLDER; ?>/images/view.png" alt=""></a>
+										<?php if ($oldalbumimagesort == 'manual') { ?>	
 										<input type="checkbox" name="ids[]" value="<?php echo $image->filename; ?>">	
+										<?php } ?>
 									</p>
 								</li>
 								<?php
@@ -208,7 +248,9 @@ echo "\n</head>";
 						<br class="clearall" />
 
 						<div>
+							<?php if ($oldalbumimagesort == 'manual') { ?>
 							<input type="hidden" id="sortableList" name="sortableList" value="" />
+							<?php } ?>
 							<p class="buttons">
 								<a href="<?php echo WEBPATH . '/' . ZENFOLDER . '/admin-edit.php?page=edit' . $parent; ?>">
 									<img	src="images/arrow_left_blue_round.png" alt="" />

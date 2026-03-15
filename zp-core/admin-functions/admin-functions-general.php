@@ -1611,6 +1611,7 @@ function processExtensionVariable($var) {
 	return $var;
 }
 
+
 /**
  * Updates $_zp_admin_user_updated on user editing 
  * @global boolean $_zp_admin_user_updated
@@ -1619,4 +1620,167 @@ function markUpdated() {
 	global $_zp_admin_user_updated;
 	$_zp_admin_user_updated = true;
 //for finding out who did it!	debugLogBacktrace('updated');
+}
+
+/**
+ * Set the admin sortorder, direction and status display
+ * 
+ * Returns an array with the new sortorder and status
+ * 
+ * @since 1.7
+ * 
+ * @param string $type 'albumimagesort' only currently (to be extended)
+ * @param string $sortorder Column to order by. For descending order '_desc' must be appended
+ * @param string $status 'all' for all, 'published', 'unpublished'
+ * @param bool $persistent True (default) if the update should be saved to db or false for temporary update obly
+ * 
+ * @return array
+ */
+function setAdminGallerySort($type = 'albumimagesort', $sortdir = null, $status = 'all', $persistent = true) {
+	switch ($type) {
+		default:
+		case'albumimagesort':
+			$sort_optionname = 'albumimagesort';
+			$sortdirection_optionname = 'albumimagedirection';
+			$sortstatus_optionname = 'albumimagesort_status';
+			break;
+	}
+	$newsort = $newsort_status = '';
+	if (!empty($sortdir)) {
+		$newsort = checkAlbumimagesort($sortdir, $sort_optionname);
+		$newsort_status = '';
+		if (!empty($status)) {
+			$newsort_status = checkAlbumimagesort($status, $sortstatus_optionname);
+		}
+		if (strpos($newsort, '_desc')) {
+			setOption($sort_optionname, substr($newsort, 0, -5), $persistent);
+			setOption($sortdirection_optionname, 'DESC', $persistent);
+		} else {
+			setOption($sort_optionname, $newsort, $persistent);
+			setOption($sortdirection_optionname, '', $persistent);
+		}
+		if (!empty($newsort_status)) {
+			setOption($sortstatus_optionname, $newsort_status, $persistent);
+		}
+	}
+	return array($newsort, $newsort_status);
+}
+
+/**
+ * Prints the admin order selector 
+ * 
+ * @since 1.7
+ * 
+ * @param string $type 'albumimagesort' only currently (to be extended)
+ */
+function printAdminGallerySortSelector($type = 'albumimagesort') {
+	switch ($type) {
+		default:
+		case 'albumimagesort':
+			$oldsort = getOption('albumimagesort');
+			$oldstatus = getOption('albumimagesort_status');
+			$direction = getOption('albumimagedirection');
+			if (empty($oldsort)) {
+				$oldsort = 'manual';
+			}
+			$inputname_oldsort = 'oldalbumimagesort';
+			$inputname_oldstatus = 'oldalbumimagesort_status';
+			$select_id_sort = 'albumimagesort';
+			$select_id_status = 'albumimagesort_status';
+			$sort = getSortByOptions('images-edit');
+			break;
+	}
+	echo '<input type="hidden" name="' . $inputname_oldsort . '" value="' . html_encode($oldsort) . '" />';
+	echo '<input type="hidden" name="' . $inputname_oldstatus . '" value="' . html_encode($oldstatus) . '" />';
+	//ksort($sort, SORT_LOCALE_STRING);
+	if ($direction) {
+		$oldsort = $oldsort . '_desc';
+	}
+	echo '<select id="' . $select_id_sort . '" name="' . $select_id_sort . '" onchange="this.form.submit()">';
+	generateListFromArray(array($oldsort), $sort, false, true);
+	echo '</select>';
+	$sort_status = getSortByStatusOptions();
+	echo '<select id="' . $select_id_status . '" name="' . $select_id_status . '" onchange="this.form.submit()">';
+	generateListFromArray(array($oldstatus), $sort_status, false, true);
+	echo '</select>';
+}
+
+/**
+ * Gets info about the current frontend sorting setting either for the general gallery 
+ * or for a specific album if $albumobj is set
+ * 
+ * Returns array with "type" and "dir"
+ * 
+ * @since 1.7
+ * 
+ * @param string $type 'albums' or 'images'
+ * @param object $albumobj Album object - optional otherwise gallery setting is displayed
+ * @retunr array
+ */
+function getAdminGallerySortInfo($type = 'albums', $albumobj = null) {
+	global $_zp_gallery;
+	if (AlbumBase::isAlbumObject($albumobj)) {
+		$obj = $albumobj;
+	} else {
+		$obj = $_zp_gallery;
+	}
+	switch ($type) {
+		case 'images':
+			$sort = array_flip(getSortByOptions($type));
+			break;
+		case 'albums':
+			$sort = array_flip(getSortByOptions($type));
+			break;
+	}
+	if (isset($sort[$obj->getSortType($type)])) {
+		$sorttype = $sort[$obj->getSortType($type)];
+	} else {
+		$sorttype = $obj->getSortType($type);
+	}
+	if ($obj->getSortDirection($type)) {
+		$dir = gettext('descending');
+	} else {
+		$dir = gettext('ascending');
+	}
+	return array(
+			'type' => $sorttype,
+			'dir' => $dir
+	);
+}
+
+/**
+ * Prints a info notebox about the current frontend sorting setting either for the general gallery 
+ * or for a specific album if $albumobj is set
+ * 
+ * @since 1.7
+ * 
+ * @param string $type 'albums' or 'images' or 'albums-images'
+ * @param object $albumobj Album object - optional otherwise gallery setting is displayed
+ */
+function printAdminGallerySortInfo($type = 'albums', $albumobj = null) {
+	switch ($type) {
+		case 'images':
+		case 'albums':
+			$sort = getAdminGallerySortInfo($type, $albumobj);
+			break;
+		case 'albums-images':
+			$sort = getAdminGallerySortInfo('albums', $albumobj);
+			$sort_images = getAdminGallerySortInfo('images', $albumobj);
+			break;
+	}
+	echo '<p class="admingallerysortinfo">';
+	switch ($type) {
+		case 'albums':
+			printf(gettext('Current albums frontend sort: <strong>%1$s (%2$s)</strong>'), $sort['type'], $sort['dir']);
+			break;
+		case 'images':
+			printf(gettext('Current images frontend sort: <strong>%1$s (%2$s)</strong>'), $sort['type'], $sort['dir']);
+			break;
+		case 'albums-images':
+			printf(gettext('Current albums frontend sort: <strong>%1$s (%2$s)</strong>'), $sort['type'], $sort['dir']);
+			echo ' / ';
+			printf(gettext('Current images frontend sort: <strong>%1$s (%2$s)</strong>'), $sort_images['type'], $sort_images['dir']);
+			break;
+	}
+	echo '</p>';
 }

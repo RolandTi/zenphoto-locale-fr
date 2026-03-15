@@ -280,14 +280,7 @@ if (isset($_GET['action'])) {
 									} // if image exists
 								}
 							} else {
-								if (strpos($newsort, '_desc')) {
-									setOption('albumimagesort', substr($newsort, 0, -5));
-									setOption('albumimagedirection', 'DESC');
-								} else {
-									setOption('albumimagesort', $newsort);
-									setOption('albumimagedirection', '');
-								}
-								setOption('albumimagesort_status', $newsort_status);
+								setAdminGallerySort('albumimagesort', $newsort, $newsort_status, true);
 								$notify = '&';
 							}
 							if (isset($_POST['ids'])) { //	process bulk actions, not individual image actions.
@@ -420,21 +413,7 @@ if (isset($_GET['action'])) {
 	} // end of switch
 } else {
 	if (isset($_GET['albumimagesort'])) {
-		$newsort = checkAlbumimagesort(sanitize($_GET['albumimagesort'],3));
-		$newsort_status = '';
-		if(isset($_GET['albumimagesort_status'])) {
-			$newsort_status = checkAlbumimagesort(sanitize($_GET['albumimagesort_status'],3),'albumimagesort_status');
-		}
-		if (strpos($newsort, '_desc')) {
-			setOption('albumimagesort', substr($newsort, 0, -5), false);
-			setOption('albumimagedirection', 'DESC', false);
-		} else {
-			setOption('albumimagesort', $newsort, false);
-			setOption('albumimagedirection', '', false);
-		}
-		if(!empty($newsort_status)) {
-			setOption('albumimagesort_status',$newsort_status, false);
-		}
+		list($newsort, $newsort_status) = setAdminGallerySort('albumimagesort', sanitize($_GET['albumimagesort'],3), sanitize($_GET['albumimagesort_status'],3), false);
 	}
 }
 
@@ -737,22 +716,7 @@ echo "\n</head>";
 								<?php XSRFToken('savealbumorder'); ?>
 								<p>
 									<?php
-									$sorttype = strtolower($album->getSortType('album'));
-									if ($sorttype != 'manual') {
-										if ($album->getSortDirection('album')) {
-											$dir = gettext(' descending');
-										} else {
-											$dir = '';
-										}
-										$sortNames = getSortByOptions('albums');
-										$sortNames = array_flip($sortNames);
-										if(array_key_exists($sorttype, $sortNames)) {
-											$sorttype = $sortNames[$sorttype];
-										} 
-									} else {
-										$dir = '';
-									}
-									printf(gettext('Current sort: <em>%1$s%2$s</em>. '), $sorttype, $dir);
+									printAdminGallerySortInfo('albums-images', $album);
 									?>
 								</p>
 								<p>
@@ -928,8 +892,10 @@ echo "\n</head>";
 									if (!$singleimage) {
 										?>
 										<tr>
-											<td><?php echo gettext("Click on the image to change the thumbnail cropping."); ?>	</td>
-
+											<td>
+												<?php printAdminGallerySortInfo('images', $album); ?>
+												<?php echo gettext("Click on the image to change the thumbnail cropping."); ?>
+											</td>
 											<td align="right">
 												<?php
 												$sort = getSortByOptions('images-edit');
@@ -1638,24 +1604,8 @@ echo "\n</head>";
 				$albums = getNestedAlbumList(NULL, $_zp_admin_album_nesting);
 				if (count($albums) > 0) {
 					if (zp_loggedin(ADMIN_RIGHTS) && (count($albums)) > 1) {
-						$sorttype = strtolower($_zp_gallery->getSortType());
-						if ($sorttype != 'manual') {
-							if ($_zp_gallery->getSortDirection()) {
-								$dir = gettext(' descending');
-							} else {
-								$dir = '';
-							}
-							$sortNames = getSortByOptions('albums');
-							if(array_key_exists($sorttype, $sortNames)) {
-								$sorttype = $sortNames[$sorttype];
-							} 
-						} else {
-							$dir = '';
-						}
+						printAdminGallerySortInfo('albums-images', $album);
 						?>
-						<p>
-							<?php printf(gettext('Current sort: <em>%1$s%2$s</em>.'), $sorttype, $dir); ?>
-						</p>
 						<p>
 							<?php echo gettext('Drag the albums into the order you wish them displayed.'); ?>
 						</p>

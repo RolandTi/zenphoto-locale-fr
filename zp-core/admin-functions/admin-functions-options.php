@@ -479,7 +479,6 @@ function getSortByStatusOptions() {
 	);
 }
 
-
 /**
  * Prints a selector (select list) with a custom text field from the values parameter. The following array entries will be created automatically:
  *
@@ -742,3 +741,4 @@ function getDatetimeFormatlistForSelector($formats = array(), $use_localized_dat
 	}
 	return $formatlist;
 }
+

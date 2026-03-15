@@ -329,12 +329,13 @@ class AlbumBase extends MediaObject {
 	/**
 	 * Returns the sort type of the album images
 	 * Will return a parent sort type if the sort type for this album is empty
-	 *
+	 * @param string $what 'images' if you want the image direction,
+	 *        'albums' if you want it for the album
 	 * @return string
 	 */
-	function getSortType($what = 'image') {
+	function getSortType($what = 'images') {
 		global $_zp_gallery;
-		if ($what == 'image') {
+		if ($what == 'images' || $what == 'image') {
 			$type = $this->get('sort_type');
 		} else {
 			$type = $this->get('subalbum_sort_type');
@@ -342,7 +343,7 @@ class AlbumBase extends MediaObject {
 		if (empty($type)) {
 			$parentalbum = $this->getParent();
 			if (is_null($parentalbum)) {
-				if ($what == 'image') {
+				if ($what == 'images' || $what == 'image') {
 					$type = IMAGE_SORT_TYPE;
 				} else {
 					$type = $_zp_gallery->getSortType();
@@ -358,11 +359,11 @@ class AlbumBase extends MediaObject {
 	 * sets sort directions for the album
 	 *
 	 * @param bool $val the direction
-	 * @param string $what 'image_sortdirection' if you want the image direction,
-	 *        'album_sortdirection' if you want it for the album
+	 * @param string $what 'images' if you want the image direction,
+	 *        'albums' if you want it for the album
 	 */
-	function setSortDirection($val, $what = 'image') {
-		if ($what == 'image') {
+	function setSortDirection($val, $what = 'images') {
+		if ($what == 'images' || $what == 'image') {
 			$this->set('image_sortdirection', (int) ($val && true));
 		} else {
 			$this->set('album_sortdirection', (int) ($val && true));
@@ -373,10 +374,10 @@ class AlbumBase extends MediaObject {
 	 * Stores the sort type for the album
 	 *
 	 * @param string $sorttype the album sort type
-	 * @param string $what 'Description'image' or 'album'
+	 * @param string $what 'Description 'images' or 'albums'
 	 */
-	function setSortType($sorttype, $what = 'image') {
-		if ($what == 'image') {
+	function setSortType($sorttype, $what = 'images') {
+		if ($what == 'images' || $what == 'image') {
 			$this->set('sort_type', $sorttype);
 		} else {
 			$this->set('subalbum_sort_type', $sorttype);

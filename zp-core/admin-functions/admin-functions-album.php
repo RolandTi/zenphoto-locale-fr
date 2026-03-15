@@ -1596,17 +1596,19 @@ function checkAlbumParentid($albumname, $id, $recorder) {
 	}
 }
 
+
 /**
  * Make sure the albumimagesort is only an allowed value. Otherwise returns nothing.
-
+ * 
  * @param string $val
  * @param string $type 'albumimagesort' or 'albumimagesort_status'
  * @return string
  */
 function checkAlbumimagesort($val, $type = 'albumimagesort') {
 	switch ($type) {
+		default:
 		case 'albumimagesort':
-			$sortcheck = getSortByOptions('images');
+			$sortcheck = getSortByOptions('images-edit');
 			$direction_check = true;
 			break;
 		case 'albumimagesort_status':
