@@ -158,8 +158,14 @@ function printCategoryListSortableTable($cat, $flag) {
 			<?php echo "<a href='admin-edit.php?newscategory&amp;titlelink=" . $cat->getName() . "' title='" . gettext('Edit this category') . "'>" . $cattitle . "</a>" . checkHitcounterDisplay($cat->getHitcounter()); ?>
 		</div>
 		<div class="page-list_extra">
-			<?php echo $count; ?>
-			<?php echo gettext("articles"); ?>
+			<?php 
+			$linkstart = $linkend = '';
+			if ($count != 0) {
+				$linkstart = '<a href="admin-news-articles.php?category='. $cat->getName(). '">';
+				$linkend = '</a>';
+			}
+			echo $linkstart . sprintf(ngettext("%u article", "%u articles", $count), $count) . $linkend; 
+			?>
 		</div>
 
 		<div class="page-list_iconwrapper">

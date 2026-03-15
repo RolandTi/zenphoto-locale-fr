@@ -167,15 +167,17 @@ function deleteArticle($titlelink) {
  * @param obj $obj object of the news article
  */
 function printArticleCategories($obj) {
-  $cat = $obj->getCategories();
-  $number = 0;
-  foreach ($cat as $cats) {
-    $number++;
-    if ($number != 1) {
-      echo ", ";
-    }
-    echo i18n::getLanguageString($cats['title']);
-  }
+	$cat = $obj->getCategories();
+	$number = 0;
+	foreach ($cat as $cats) {
+		$number++;
+		if ($number != 1) {
+			echo ", ";
+		}
+		echo '<a href="admin-news-articles.php?category=' . $cats['titlelink'] . '">';
+		echo i18n::getLanguageString($cats['title']);
+		echo '</a>';
+	}
 }
 
 /**
