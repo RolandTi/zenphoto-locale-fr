@@ -200,7 +200,7 @@ echo "\n</head>";
 							if ($oldalbumimagesort == 'manual') {
 								echo gettext("<strong>Manual sorting enabled</strong>. Set the image order by dragging them to the positions you desire."); 
 							} else {
-								echo gettext('Set the image order to <strong>manual</strong> above to enabled drag & drop sorting.');
+								echo gettext('Set the image order to <strong>manual</strong> above to enable drag & drop sorting.');
 							}
 							?>
 						</p>
