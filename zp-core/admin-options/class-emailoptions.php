@@ -83,7 +83,7 @@ class emailOptions {
 						'desc' => gettext("")
 				),
 				gettext('PHPMailer – Mail user:') => array(
-						'key' => 'PHPMailer_use',
+						'key' => 'PHPMailer_user',
 						'type' => OPTION_TYPE_TEXTBOX,
 						'desc' => gettext("")
 				),
