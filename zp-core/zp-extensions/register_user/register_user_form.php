@@ -29,7 +29,7 @@ $action = preg_replace('/\?verify=(.*)/', '', getRequestURI());
 				}
 				?>
 			</label>
-			<input type="text" id="adminuser" name="user" value="<?php echo html_encode(registerUser::$user); ?>" size="<?php echo TEXT_INPUT_SIZE; ?>" required<?php echo $pattern_attr . $title_attr; ?> />
+			<input type=""<?php echo $username_type ; ?>" id="adminuser" name="user" value="<?php echo html_encode(registerUser::$user); ?>" size="<?php echo TEXT_INPUT_SIZE; ?>" required<?php echo $pattern_attr . $title_attr; ?> />
 		</p>
 		<?php $_zp_authority->printPasswordForm(NULL, false, NULL, false, $flag = '<strong>*</strong>'); ?>
 		<p>
