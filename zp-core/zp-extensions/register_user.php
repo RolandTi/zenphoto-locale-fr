@@ -318,6 +318,8 @@ class registerUser {
 			if (!$mail_duplicate) {
 				registerUser::$notify = 'exists';
 			}
+		} else if(preg_match('/[^a-zA-Z_\-0-9 ]/i', registerUser::$user)) {
+			registerUser::$notify = 'invalidusername';
 		}
 		if (isset($_POST['admin_email'])) {
 			registerUser::$admin_email = trim(strval(sanitize($_POST['admin_email'])));
@@ -726,6 +728,14 @@ class registerUser {
 					<div class="errorbox fade-message">
 						<h2><?php echo gettext("Data usage confirmation missing."); ?></h2>
 						<p><?php echo gettext('You have not agreed to data storage and handling by this website.'); ?></p>
+					</div>
+					<?php
+					break;
+				case 'invalidusername':
+					?>
+					<div class="errorbox fade-message">
+						<h2><?php echo gettext("Invalid user name."); ?></h2>
+						<p><?php echo gettext('User names may only contain alphanumeric characters.'); ?></p>
 					</div>
 					<?php
 					break;
