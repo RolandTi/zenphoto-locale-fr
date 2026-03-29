@@ -24,7 +24,7 @@ $action = preg_replace('/\?verify=(.*)/', '', getRequestURI());
 				} else {
 					echo gettext("User ID") . '<strong>*</strong>';
 					$username_type = 'text';
-					$pattern_attr = ' pattern="^[a-zA-Z0-9]+$"';
+					$pattern_attr = ' pattern="^[a-zA-Z0-9_\-]+$"';
 					$title_attr = ' title="'. gettext('Only alphanumeric and numeric chars allowed').'"';
 				}
 				?>
