@@ -19,12 +19,17 @@ $action = preg_replace('/\?verify=(.*)/', '', getRequestURI());
 				<?php
 				if ($emailid = getOption('register_user_email_is_id')) {
 					echo gettext("Email<strong>*</strong> (this will be your user id)");
+					$pattern_attr = $title_attr = '';
+					$username_type = 'email';
 				} else {
 					echo gettext("User ID") . '<strong>*</strong>';
+					$username_type = 'text';
+					$pattern_attr = ' pattern="^[a-zA-Z0-9]+$"';
+					$title_attr = ' title="'. gettext('Only alphanumeric and numeric chars allowed').'"';
 				}
 				?>
 			</label>
-			<input type="text" id="adminuser" name="user" value="<?php echo html_encode(registerUser::$user); ?>" size="<?php echo TEXT_INPUT_SIZE; ?>" required />
+			<input type="text" id="adminuser" name="user" value="<?php echo html_encode(registerUser::$user); ?>" size="<?php echo TEXT_INPUT_SIZE; ?>" required<?php echo $pattern_attr . $title_attr; ?> />
 		</p>
 		<?php $_zp_authority->printPasswordForm(NULL, false, NULL, false, $flag = '<strong>*</strong>'); ?>
 		<p>
@@ -36,7 +41,7 @@ $action = preg_replace('/\?verify=(.*)/', '', getRequestURI());
 			?>
 			<p>
 				<label for="admin_email"><?php echo gettext("Email"); ?><?php if (!$emailid) echo '<strong>*</strong>'; ?></label>
-				<input type="text" id="admin_email" name="admin_email" value="<?php echo html_encode(registerUser::$admin_email); ?>" size="<?php echo TEXT_INPUT_SIZE; ?>" required />
+				<input type="email" id="admin_email" name="admin_email" value="<?php echo html_encode(registerUser::$admin_email); ?>" size="<?php echo TEXT_INPUT_SIZE; ?>" required />
 			</p>
 			<?php
 		}
